@@ -20,19 +20,19 @@ namespace gtestbdd
         {
             if(!mGiven)
             {
-                printError("missing GIVEN clause");
+                printError("GIVEN clause missing.");
                 assert(false);
             }
             
             if(!mWhen)
             {
-                printError("missing WHEN clause");
+                printError("WHEN clause missing.");
                 assert(false);
             }
             
             if(!mThen)
             {
-                printError("missing THEN clause");
+                printError("THEN clause missing.");
                 assert(false);
             }
         }
@@ -52,7 +52,7 @@ namespace gtestbdd
             }
             else
             {
-                printError("missing GIVEN clause");
+                printError("GIVEN clause missing.");
                 assert(false);
             }
         }
@@ -71,7 +71,7 @@ namespace gtestbdd
             }
         }
         
-        void and(const std::string &description)
+        void et(const std::string &description)
         {
             if(mGiven || mWhen || mThen)
             {
@@ -155,3 +155,6 @@ namespace gtestbdd
 
 #define THEN(description)\
     then(description);
+
+#define AND(description)\
+    et(description)
