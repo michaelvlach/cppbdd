@@ -157,4 +157,4 @@ namespace gtestbdd
     then(description);
 
 #define AND(description)\
-    et(description)
+    et(description);
