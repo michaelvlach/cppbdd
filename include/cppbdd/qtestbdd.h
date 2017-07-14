@@ -12,7 +12,7 @@ namespace qtestbdd
         Scenario(const QString &description) :
             mDescription(description)
         {
-            qInfo() << "SCENARIO" << description;
+            printScenario();
         }
 
         void given(const QString &description)
@@ -62,36 +62,35 @@ namespace qtestbdd
     private:
         void printError(const QString &message)
         {
-            qError() << mDescription << " " << message;
+            qCritical() << ("ERROR in '" + mDescription + "':") << message;
         }
 
         void printScenario()
         {
-            qInfo() << "    SCENARIO " << mDescription;
+            qInfo() << "SCENARIO" << mDescription;
         }
 
         void printGiven(const QString &description)
         {
-            qInfo() << mIndentStep << "GIVEN " << description;
+            qInfo() << "  GIVEN " << description;
         }
 
         void printWhen(const QString &description)
         {
-            qInfo() << mIndentStep << "WHEN " << description;
+            qInfo() << "  WHEN  " << description;
         }
 
         void printThen(const QString &description)
         {
-            qInfo() << mIndentStep << "THEN " << description;
+            qInfo() << "  THEN  " << description;
         }
 
         void printAnd(const QString &description)
         {
-            qInfo() << mIndentStep << "  AND " << description;
+            qInfo() << "    AND " << description;
         }
 
         const QString mDescription;
-        const QString mIndentStep = "        ";
         bool mGiven = false;
         bool mWhen = false;
         bool mThen = false;
@@ -111,13 +110,13 @@ namespace qtestbdd
     qtestbdd::Scenario s(description);
 
 #define GIVEN(description)\
-    given(description);
+    s.given(description);
 
 #define WHEN(description)\
-    when(description);
+    s.when(description);
 
 #define THEN(description)\
-    then(description);
+    s.then(description);
 
 #define AND(description)\
-    et(description);
+    s.et(description);
