@@ -15,6 +15,24 @@ namespace qtestbdd
             printScenario();
         }
 
+        virtual ~Scenario()
+        {
+            if(!mGiven)
+            {
+                QFAIL("GIVEN clause missing.");
+            }
+
+            if(!mWhen)
+            {
+                QFAIL("THEN clause missing.");
+            }
+
+            if(!mThen)
+            {
+                QFAIL("THEN clause missing.");
+            }
+        }
+
         void given(const QString &description)
         {
             mGiven = true;
@@ -60,11 +78,6 @@ namespace qtestbdd
         }
 
     private:
-        void printError(const QString &message)
-        {
-            qCritical() << ("ERROR in '" + mDescription + "':") << message;
-        }
-
         void printScenario()
         {
             qInfo() << "SCENARIO" << mDescription;
