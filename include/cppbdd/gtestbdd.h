@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <iostream>
 #include <string>
 #include <cassert>
@@ -18,18 +18,23 @@ namespace gtestbdd
 
         virtual ~Scenario()
         {
+            if (!mGiven && !mWhen && !mThen)
+            {
+                return;
+            }
+
             if(!mGiven)
             {
                 printError("GIVEN clause missing.");
                 assert(false);
             }
-            
+
             if(!mWhen)
             {
                 printError("WHEN clause missing.");
                 assert(false);
             }
-            
+
             if(!mThen)
             {
                 printError("THEN clause missing.");
@@ -70,7 +75,7 @@ namespace gtestbdd
                 assert(false);
             }
         }
-        
+
         void et(const std::string &description)
         {
             if(mGiven || mWhen || mThen)
@@ -92,31 +97,30 @@ namespace gtestbdd
 
         void printScenario()
         {
-            std::cout << "    SCENARIO " << mDescription << std::endl;
+            std::cout << std::right << std::setw(16) << "SCENARIO " << mDescription << std::endl;
         }
 
         void printGiven(const std::string &description)
         {
-            std::cout << mIndentStep << "GIVEN " << description << std::endl;
+            std::cout << std::right << std::setw(16) << "GIVEN " << description << std::endl;
         }
 
         void printWhen(const std::string &description)
         {
-            std::cout << mIndentStep << "WHEN " << description << std::endl;
+            std::cout << std::right << std::setw(16) << "WHEN " << description << std::endl;
         }
 
         void printThen(const std::string &description)
         {
-            std::cout << mIndentStep << "THEN " << description << std::endl;
+            std::cout << std::right << std::setw(16) << "THEN " << description << std::endl;
         }
-        
+
         void printAnd(const std::string &description)
         {
-            std::cout << mIndentStep << "  AND" << description << std::endl; 
+            std::cout << std::right << std::setw(16) << "AND " << description << std::endl;
         }
 
         const std::string mDescription;
-        const std::string mIndentStep = "        ";
         bool mGiven = false;
         bool mWhen = false;
         bool mThen = false;
@@ -136,16 +140,39 @@ namespace gtestbdd
     }\
     namespace MAKE_UNIQUE(Feature)
 
-#define SCENARIO(description, fixture)\
-    class MAKE_UNIQUE(Scenario_##fixture##_Line) : public gtestbdd::Scenario, public fixture\
+
+#define MAKE_SCENARIO(TestClass, description, FixtureClass) \
+    class TestClass : public gtestbdd::Scenario, public FixtureClass\
     {\
     public:\
-        MAKE_UNIQUE(Scenario_##fixture##_Line)() :\
+        TestClass() :\
             gtestbdd::Scenario(description)\
         {\
         }\
+    private:\
+        virtual void TestBody();\
+        static ::testing::TestInfo* const test_info_ GTEST_ATTRIBUTE_UNUSED_;\
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(TestClass);\
     };\
-    TEST_F(MAKE_UNIQUE(Scenario_##fixture##_Line), MAKE_UNIQUE(Scenario_Line))
+    \
+    ::testing::TestInfo* const TestClass\
+      ::test_info_ =\
+        ::testing::internal::MakeAndRegisterTestInfo(\
+            #FixtureClass, description, NULL, NULL, \
+            ::testing::internal::CodeLocation(__FILE__, __LINE__), \
+            (::testing::internal::GetTypeId<FixtureClass>()), \
+            FixtureClass::SetUpTestCase, \
+            FixtureClass::TearDownTestCase, \
+            new ::testing::internal::TestFactoryImpl<\
+            TestClass>);\
+    void TestClass::TestBody()
+
+
+
+#define SCENARIO_F(description, fixture) MAKE_SCENARIO(MAKE_UNIQUE(Scenario_##fixture##_Line), description, fixture)
+
+#define SCENARIO(description) MAKE_SCENARIO(MAKE_UNIQUE(Scenario_Fixture_Line), description, ::testing::Test)
+
 
 #define GIVEN(description)\
     given(description);
