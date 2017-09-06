@@ -71,7 +71,7 @@ namespace gtestbdd
             }
             else
             {
-                printError("missing WHEN clause");
+                printError("WHEN clause missing");
                 assert(false);
             }
         }

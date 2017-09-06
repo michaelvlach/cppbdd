@@ -17,6 +17,11 @@ namespace qtestbdd
 
         virtual ~Scenario()
         {
+            if (!mGiven && !mWhen && !mThen)
+            {
+                return;
+            }
+            
             if(!mGiven)
             {
                 QFAIL("GIVEN clause missing.");
