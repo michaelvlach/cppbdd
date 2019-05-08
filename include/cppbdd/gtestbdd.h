@@ -131,6 +131,7 @@ namespace gtestbdd
 #define CONCATENATE_DETAIL(x, y) x##y
 #define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)
 #define MAKE_UNIQUE(x) CONCATENATE(x, __LINE__)
+#define GTEST_STRINGIFY_(name) #name
 
 //gtestbdd
 #define FEATURE(description)\
@@ -168,6 +169,49 @@ namespace gtestbdd
     void TestClass::TestBody()
 
 
+
+#define MAKE_SCENARIO_P(TestClass, TestName, Description, FixtureClass, Values)\
+    class TestClass : public gtestbdd::Scenario, public FixtureClass\
+    {\
+    public:\
+        TestClass() :\
+            gtestbdd::Scenario(Description)\
+        {\
+        }\
+        virtual void TestBody();\
+    private:\
+        static int AddToRegistry() {\
+            ::testing::UnitTest::GetInstance()->parameterized_test_registry().\
+                GetTestCasePatternHolder<FixtureClass>(\
+                    #FixtureClass, __FILE__, __LINE__)->AddTestPattern(\
+                        #FixtureClass,\
+                        Description,\
+                        new ::testing::internal::TestMetaFactory<TestClass>());\
+            return 0;\
+        }\
+        static int gtest_registering_dummy_;\
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(TestClass);\
+    };\
+    \
+    int TestClass::gtest_registering_dummy_ =\
+        TestClass::AddToRegistry();\
+    INSTANTIATE_TEST_CASE_P(TestName, FixtureClass, Values);\
+    void TestClass::TestBody()
+
+#define SCENARIO_P_VERBOSE(testname, description, fixture, values) \
+    MAKE_SCENARIO_P(\
+        MAKE_UNIQUE(Scenario_##fixture##_Line), \
+        testname, \
+        description, \
+        fixture, \
+        values)
+
+#define SCENARIO_P(description, fixture, values) \
+    SCENARIO_P_VERBOSE(\
+        TEST_P, \
+        description, \
+        fixture, \
+        values)
 
 #define SCENARIO_F(description, fixture) MAKE_SCENARIO(MAKE_UNIQUE(Scenario_##fixture##_Line), description, fixture)
 
