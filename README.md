@@ -71,7 +71,7 @@ CppBdd is header only based set of macros that are named after BDD custom and en
 
 Example using BDD with Google Test:
 
-```
+```cpp
 #include <cppbdd/gtestbdd.h>
 
 class Fixture : public ::testing::Test
@@ -102,7 +102,50 @@ What we did here is creating a `Fixture` class that glues our tests together pro
 
 * Google Test
 
-None
+### Parameterized SCENARIO
+
+Parameterized scenarios require a fixture and can be achieved using either of 
+
+```cpp
+SCENARIO_P("This is my scenario description", MyUniqueFixture, Values()) {
+}
+```
+or
+```cpp
+SCENARIO_P_VERBOSE(ExplicitTestName, "This is my scenario description", MyFixture, Values(..)) {
+}
+```
+
+Both of these macros deal with `INSTANTIATE_TEST_CASE_P` so that it is not required in your tests.
+The difference between them is just what appears in the test output. `SCENARIO_P` will by default prefix test output with
+`TEST_P` and presumes the fixture name and description are sufficient enough to give meaningful test output.
+Where this is not the case, you can substitute additional test information for the `ExplicitTestName` placeholder.
+
+Currently fixtures need to be unique to the parameterized scenario, otherwise it can lead to cross-talk between tests that share
+fixtures in a way that may not be desirable. The simplest way to avoid this happening in the case where a fixture is shared
+is to prefix `SCENARIO_P` with
+
+```cpp
+using UniqueFixtureName = SharedFixture;
+```
+
+for example 
+
+```cpp
+using UniqueFixtureName = SharedFixture;
+const auto emails = Values("£not#valid!!", "valid@email.com")
+SCENARIO_P("User updates their email address", UniqueFixtureName, emails) {
+}
+```
+
+### DISABLED tests
+
+To disable a `SCENARIO`, just prefix the scenario string with `"DISABLED_"` as you would for a regular TEST
+In the output you will see the number of tests disabled as usual.
+
+```bash
+  YOU HAVE 1 DISABLED TESTS
+```
 
 * QTest
 
