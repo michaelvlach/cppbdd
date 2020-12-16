@@ -131,6 +131,7 @@ namespace gtestbdd
 #define CONCATENATE_DETAIL(x, y) x##y
 #define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)
 #define MAKE_UNIQUE(x) CONCATENATE(x, __LINE__)
+#undef GTEST_STRINGIFY_
 #define GTEST_STRINGIFY_(name) #name
 
 //gtestbdd
