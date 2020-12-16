@@ -44,7 +44,7 @@ WIP
 
 (Optional) Scenarios are typically bundled into features. This lets you declare the feature.
 
-* SCENARIO(description, fixture)
+* SCENARIO_F(description, fixture)
 
 Declares the test using the fixture. Must be followed by {} that will hold all of the steps.
 
@@ -80,7 +80,7 @@ class Fixture : public ::testing::Test
 
 FEATURE("BDD style unit tests with Google Test")
 
-SCENARIO("Demonstratrating core features", Fixture)
+SCENARIO_F("Demonstratrating core features", Fixture)
 {
     //indentation is there for readability but is otherwise irrelevant
     int x, y;
@@ -96,7 +96,7 @@ SCENARIO("Demonstratrating core features", Fixture)
 }
 ```
 
-What we did here is creating a `Fixture` class that glues our tests together providing for example mock objects or other initializations. It can of course contain usual Google Test SetUpTestCase, SetUp, TearDown and TearDownTestCase methods and they will be executed as usual. SCENARIO then declares TEST_F as you would normally adding the ability to call BDD style methods that track the scenario making sure it is well formed (correct sequence of steps) and contain all the required steps.
+What we did here is creating a `Fixture` class that glues our tests together providing for example mock objects or other initializations. It can of course contain usual Google Test SetUpTestCase, SetUp, TearDown and TearDownTestCase methods and they will be executed as usual. SCENARIO_F then declares TEST_F as you would normally adding the ability to call BDD style methods that track the scenario making sure it is well formed (correct sequence of steps) and contain all the required steps.
 
 ## Framework Specific Notes ##
 
