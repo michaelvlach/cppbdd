@@ -154,7 +154,8 @@ namespace gtestbdd
     private:\
         virtual void TestBody();\
         static ::testing::TestInfo* const test_info_ GTEST_ATTRIBUTE_UNUSED_;\
-        GTEST_DISALLOW_COPY_AND_ASSIGN_(TestClass);\
+        TestClass(const TestClass&) = delete;\
+        TestClass& operator=(const TestClass&) = delete;\
     };\
     \
     ::testing::TestInfo* const TestClass\
