@@ -197,7 +197,7 @@ namespace gtestbdd
     \
     int TestClass::gtest_registering_dummy_ =\
         TestClass::AddToRegistry();\
-    INSTANTIATE_TEST_CASE_P(TestName, FixtureClass, Values);\
+    INSTANTIATE_TEST_SUITE_P(TestName, FixtureClass, Values);\
     void TestClass::TestBody()
 
 #define SCENARIO_P_VERBOSE(testname, description, fixture, values) \
