@@ -138,6 +138,15 @@ SCENARIO_P("User updates their email address", UniqueFixtureName, emails) {
 }
 ```
 
+### Typed SCENARIO
+
+Typed scenarios require a fixture and can be achieved with
+
+```cpp
+SCENARIO_T("This is my scenario description", MyUniqueFixture, Types()) {
+}
+```
+
 ### DISABLED tests
 
 To disable a `SCENARIO`, just prefix the scenario string with `"DISABLED_"` as you would for a regular TEST

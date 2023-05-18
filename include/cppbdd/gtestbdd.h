@@ -192,7 +192,8 @@ namespace gtestbdd
             return 0;\
         }\
         static int gtest_registering_dummy_;\
-        GTEST_DISALLOW_COPY_AND_ASSIGN_(TestClass);\
+        TestClass(const TestClass&) = delete;\
+        TestClass& operator=(const TestClass&) = delete;\
     };\
     \
     int TestClass::gtest_registering_dummy_ =\
@@ -214,6 +215,49 @@ namespace gtestbdd
         description, \
         fixture, \
         values)
+
+
+
+#define MAKE_SCENARIO_T(TestName, Description, FixtureClass, Types)             \
+    TYPED_TEST_SUITE(FixtureClass, Types);                                      \
+    template <typename gtest_TypeParam_>                                        \
+    class GTEST_TEST_CLASS_NAME_(FixtureClass, TestName)                        \
+        : public gtestbdd::Scenario, public FixtureClass<gtest_TypeParam_>      \
+    {                                                                           \
+    public:                                                                     \
+      GTEST_TEST_CLASS_NAME_(FixtureClass, TestName)() :                        \
+          gtestbdd::Scenario(Description)                                       \
+      {                                                                         \
+      }                                                                         \
+    private:                                                                    \
+    typedef FixtureClass<gtest_TypeParam_> TestFixture;                         \
+    typedef gtest_TypeParam_ TypeParam;                                         \
+    void TestBody() override;                                                   \
+  };                                                                            \
+  static bool gtest_##FixtureClass##_registered_                                \
+      GTEST_ATTRIBUTE_UNUSED_ = ::testing::internal::TypeParameterizedTest<     \
+          FixtureClass,                                                         \
+          ::testing::internal::TemplateSel<GTEST_TEST_CLASS_NAME_(FixtureClass, \
+                                                                  TestName)>,   \
+          GTEST_TYPE_PARAMS_(                                                   \
+              FixtureClass)>::Register("",                                      \
+                                   ::testing::internal::CodeLocation(           \
+                                       __FILE__, __LINE__),                     \
+                                   GTEST_STRINGIFY_(FixtureClass),              \
+                                   GTEST_STRINGIFY_(TestName), 0,               \
+                                   ::testing::internal::GenerateNames<          \
+                                       GTEST_NAME_GENERATOR_(FixtureClass),     \
+                                       GTEST_TYPE_PARAMS_(FixtureClass)>());    \
+  template <typename gtest_TypeParam_>                                          \
+  void GTEST_TEST_CLASS_NAME_(FixtureClass,                                     \
+                              TestName)<gtest_TypeParam_>::TestBody()
+
+#define SCENARIO_T(description, fixture, types) \
+    MAKE_SCENARIO_T(\
+        MAKE_UNIQUE(Scenario_##fixture##_Line), \
+        description, \
+        fixture, \
+        types)
 
 #define SCENARIO_F(description, fixture) MAKE_SCENARIO(MAKE_UNIQUE(Scenario_##fixture##_Line), description, fixture)
 
