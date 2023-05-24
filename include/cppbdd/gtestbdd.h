@@ -7,6 +7,22 @@
 
 namespace gtestbdd
 {
+    class ExpectString
+    {
+    public:
+        template<typename... Args>
+        explicit ExpectString(Args&&... args)
+            : mString(std::forward<Args>(args)...)
+        {}
+
+        std::string GetString() &&
+        {
+            return std::move(mString);
+        }
+
+        std::string mString;
+    };
+
     class Scenario
     {
     public:
@@ -48,6 +64,19 @@ namespace gtestbdd
             printGiven(description);
         }
 
+        void then(ExpectString description)
+        {
+            if(mGiven)
+            {
+                mThenExpects.push_back(std::move(description).GetString());
+            }
+            else
+            {
+                printError("GIVEN clause missing.");
+                assert(false);
+            }
+        }
+
         void when(const std::string &description)
         {
             if(mGiven)
@@ -67,7 +96,19 @@ namespace gtestbdd
             if(mWhen)
             {
                 mThen = true;
-                printThen(description);
+
+                if(!mThenExpects.empty())
+                {
+                    printThen(mThenExpects[0]);
+                    for (auto i = 1; i < mThenExpects.size(); ++i)
+                        printAnd(mThenExpects[i]);
+                    mThenExpects.clear();
+                    printAnd(description);
+                }
+                else
+                {
+                    printThen(description);
+                }
             }
             else
             {
@@ -80,7 +121,10 @@ namespace gtestbdd
         {
             if(mGiven || mWhen || mThen)
             {
-                printAnd(description);
+                if(!mWhen && !mThenExpects.empty())
+                    mThenExpects.push_back(description);
+                else
+                    printAnd(description);
             }
             else
             {
@@ -121,6 +165,7 @@ namespace gtestbdd
         }
 
         const std::string mDescription;
+        std::vector<std::string> mThenExpects;
         bool mGiven = false;
         bool mWhen = false;
         bool mThen = false;
@@ -269,6 +314,9 @@ namespace gtestbdd
 
 #define WHEN(description)\
     when(description);
+
+#define EXPECT(description)\
+    gtestbdd::ExpectString(description)
 
 #define THEN(description)\
     then(description);
