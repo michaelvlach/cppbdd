@@ -230,10 +230,14 @@ namespace gtestbdd
         static int AddToRegistry() {\
             ::testing::UnitTest::GetInstance()->parameterized_test_registry().\
                 GetTestCasePatternHolder<FixtureClass>(\
-                    #FixtureClass, __FILE__, __LINE__)->AddTestPattern(\
-                        #FixtureClass,\
-                        Description,\
-                        new ::testing::internal::TestMetaFactory<TestClass>());\
+                    GTEST_STRINGIFY_(FixtureClass),\
+                    ::testing::internal::CodeLocation(\
+                        __FILE__, __LINE__))->AddTestPattern(\
+                            GTEST_STRINGIFY_(FixtureClass),\
+                            Description,\
+                            new ::testing::internal::TestMetaFactory<TestClass>(),\
+                            ::testing::internal::CodeLocation(\
+                                __FILE__, __LINE__));\
             return 0;\
         }\
         static int gtest_registering_dummy_;\
