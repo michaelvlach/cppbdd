@@ -116,7 +116,7 @@ SCENARIO_P_VERBOSE(ExplicitTestName, "This is my scenario description", MyFixtur
 }
 ```
 
-Both of these macros deal with `INSTANTIATE_TEST_CASE_P` so that it is not required in your tests.
+Both of these macros deal with `INSTANTIATE_TEST_SUITE_P` so that it is not required in your tests.
 The difference between them is just what appears in the test output. `SCENARIO_P` will by default prefix test output with
 `TEST_P` and presumes the fixture name and description are sufficient enough to give meaningful test output.
 Where this is not the case, you can substitute additional test information for the `ExplicitTestName` placeholder.
@@ -135,6 +135,15 @@ for example
 using UniqueFixtureName = SharedFixture;
 const auto emails = Values("£not#valid!!", "valid@email.com")
 SCENARIO_P("User updates their email address", UniqueFixtureName, emails) {
+}
+```
+
+### Typed SCENARIO
+
+Typed scenarios require a fixture and can be achieved with
+
+```cpp
+SCENARIO_T("This is my scenario description", MyUniqueFixture, Types()) {
 }
 ```
 

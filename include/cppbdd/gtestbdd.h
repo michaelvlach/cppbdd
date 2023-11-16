@@ -7,6 +7,22 @@
 
 namespace gtestbdd
 {
+    class ExpectString
+    {
+    public:
+        template<typename... Args>
+        explicit ExpectString(Args&&... args)
+            : mString(std::forward<Args>(args)...)
+        {}
+
+        std::string GetString() &&
+        {
+            return std::move(mString);
+        }
+
+        std::string mString;
+    };
+
     class Scenario
     {
     public:
@@ -18,7 +34,7 @@ namespace gtestbdd
 
         virtual ~Scenario()
         {
-            if (!mGiven && !mWhen && !mThen)
+            if(!mGiven && !mWhen && !mThen)
             {
                 return;
             }
@@ -44,13 +60,41 @@ namespace gtestbdd
 
         void given(const std::string &description)
         {
+            if (mGiven)
+            {
+                printError("GIVEN clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
             mGiven = true;
             printGiven(description);
         }
 
+        void then(ExpectString description)
+        {
+            if(!mThenExpects.empty())
+            {
+                printError("THEN(EXPECT()) clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
+            else if(mGiven)
+            {
+                mThenExpects.push_back(std::move(description).GetString());
+            }
+            else
+            {
+                printError("GIVEN clause missing.");
+                assert(false);
+            }
+        }
+
         void when(const std::string &description)
         {
-            if(mGiven)
+            if(mWhen)
+            {
+                printError("WHEN clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
+            else if(mGiven)
             {
                 mWhen = true;
                 printWhen(description);
@@ -64,10 +108,27 @@ namespace gtestbdd
 
         void then(const std::string &description)
         {
-            if(mWhen)
+            if(mThen)
+            {
+                printError("THEN clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
+            else if(mWhen)
             {
                 mThen = true;
-                printThen(description);
+
+                if(!mThenExpects.empty())
+                {
+                    printThen(mThenExpects[0]);
+                    for (size_t i = 1; i < mThenExpects.size(); ++i)
+                        printAnd(mThenExpects[i]);
+                    mThenExpects.clear();
+                    printAnd(description);
+                }
+                else
+                {
+                    printThen(description);
+                }
             }
             else
             {
@@ -80,7 +141,10 @@ namespace gtestbdd
         {
             if(mGiven || mWhen || mThen)
             {
-                printAnd(description);
+                if(!mWhen && !mThenExpects.empty())
+                    mThenExpects.push_back(description);
+                else
+                    printAnd(description);
             }
             else
             {
@@ -121,6 +185,7 @@ namespace gtestbdd
         }
 
         const std::string mDescription;
+        std::vector<std::string> mThenExpects;
         bool mGiven = false;
         bool mWhen = false;
         bool mThen = false;
@@ -154,7 +219,8 @@ namespace gtestbdd
     private:\
         virtual void TestBody();\
         static ::testing::TestInfo* const test_info_ GTEST_ATTRIBUTE_UNUSED_;\
-        GTEST_DISALLOW_COPY_AND_ASSIGN_(TestClass);\
+        TestClass(const TestClass&) = delete;\
+        TestClass& operator=(const TestClass&) = delete;\
     };\
     \
     ::testing::TestInfo* const TestClass\
@@ -184,19 +250,24 @@ namespace gtestbdd
         static int AddToRegistry() {\
             ::testing::UnitTest::GetInstance()->parameterized_test_registry().\
                 GetTestCasePatternHolder<FixtureClass>(\
-                    #FixtureClass, __FILE__, __LINE__)->AddTestPattern(\
-                        #FixtureClass,\
-                        Description,\
-                        new ::testing::internal::TestMetaFactory<TestClass>());\
+                    GTEST_STRINGIFY_(FixtureClass),\
+                    ::testing::internal::CodeLocation(\
+                        __FILE__, __LINE__))->AddTestPattern(\
+                            GTEST_STRINGIFY_(FixtureClass),\
+                            Description,\
+                            new ::testing::internal::TestMetaFactory<TestClass>(),\
+                            ::testing::internal::CodeLocation(\
+                                __FILE__, __LINE__));\
             return 0;\
         }\
         static int gtest_registering_dummy_;\
-        GTEST_DISALLOW_COPY_AND_ASSIGN_(TestClass);\
+        TestClass(const TestClass&) = delete;\
+        TestClass& operator=(const TestClass&) = delete;\
     };\
     \
     int TestClass::gtest_registering_dummy_ =\
         TestClass::AddToRegistry();\
-    INSTANTIATE_TEST_CASE_P(TestName, FixtureClass, Values);\
+    INSTANTIATE_TEST_SUITE_P(TestName, FixtureClass, Values);\
     void TestClass::TestBody()
 
 #define SCENARIO_P_VERBOSE(testname, description, fixture, values) \
@@ -214,6 +285,49 @@ namespace gtestbdd
         fixture, \
         values)
 
+
+
+#define MAKE_SCENARIO_T(TestName, Description, FixtureClass, Types)             \
+    TYPED_TEST_SUITE(FixtureClass, Types);                                      \
+    template <typename gtest_TypeParam_>                                        \
+    class GTEST_TEST_CLASS_NAME_(FixtureClass, TestName)                        \
+        : public gtestbdd::Scenario, public FixtureClass<gtest_TypeParam_>      \
+    {                                                                           \
+    public:                                                                     \
+      GTEST_TEST_CLASS_NAME_(FixtureClass, TestName)() :                        \
+          gtestbdd::Scenario(Description)                                       \
+      {                                                                         \
+      }                                                                         \
+    private:                                                                    \
+    typedef FixtureClass<gtest_TypeParam_> TestFixture;                         \
+    typedef gtest_TypeParam_ TypeParam;                                         \
+    void TestBody() override;                                                   \
+  };                                                                            \
+  static bool gtest_##FixtureClass##_registered_                                \
+      GTEST_ATTRIBUTE_UNUSED_ = ::testing::internal::TypeParameterizedTest<     \
+          FixtureClass,                                                         \
+          ::testing::internal::TemplateSel<GTEST_TEST_CLASS_NAME_(FixtureClass, \
+                                                                  TestName)>,   \
+          GTEST_TYPE_PARAMS_(                                                   \
+              FixtureClass)>::Register("",                                      \
+                                   ::testing::internal::CodeLocation(           \
+                                       __FILE__, __LINE__),                     \
+                                   GTEST_STRINGIFY_(FixtureClass),              \
+                                   GTEST_STRINGIFY_(TestName), 0,               \
+                                   ::testing::internal::GenerateNames<          \
+                                       GTEST_NAME_GENERATOR_(FixtureClass),     \
+                                       GTEST_TYPE_PARAMS_(FixtureClass)>());    \
+  template <typename gtest_TypeParam_>                                          \
+  void GTEST_TEST_CLASS_NAME_(FixtureClass,                                     \
+                              TestName)<gtest_TypeParam_>::TestBody()
+
+#define SCENARIO_T(description, fixture, types) \
+    MAKE_SCENARIO_T(\
+        MAKE_UNIQUE(Scenario_##fixture##_Line), \
+        description, \
+        fixture, \
+        types)
+
 #define SCENARIO_F(description, fixture) MAKE_SCENARIO(MAKE_UNIQUE(Scenario_##fixture##_Line), description, fixture)
 
 #define SCENARIO(description) MAKE_SCENARIO(MAKE_UNIQUE(Scenario_Fixture_Line), description, ::testing::Test)
@@ -224,6 +338,9 @@ namespace gtestbdd
 
 #define WHEN(description)\
     when(description);
+
+#define EXPECT(description)\
+    gtestbdd::ExpectString(description)
 
 #define THEN(description)\
     then(description);
