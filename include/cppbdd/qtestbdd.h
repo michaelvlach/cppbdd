@@ -17,7 +17,7 @@ namespace qtestbdd
 
         virtual ~Scenario()
         {
-            if (!mGiven && !mWhen && !mThen)
+            if(!mGiven && !mWhen && !mThen)
             {
                 return;
             }
@@ -40,13 +40,21 @@ namespace qtestbdd
 
         void given(const QString &description)
         {
+            if (mGiven)
+            {
+                QFAIL("GIVEN clause is duplicated. AND should be used for additional statements.");
+            }
             mGiven = true;
             printGiven(description);
         }
 
         void when(const QString &description)
         {
-            if(mGiven)
+            if(mWhen)
+            {
+                QFAIL("WHEN clause is duplicated. AND should be used for additional statements.");
+            }
+            else if(mGiven)
             {
                 mWhen = true;
                 printWhen(description);
@@ -59,7 +67,11 @@ namespace qtestbdd
 
         void then(const QString &description)
         {
-            if(mWhen)
+            if(mThen)
+            {
+                QFAIL("THEN clause is duplicated. AND should be used for additional statements.");
+            }
+            else if(mWhen)
             {
                 mThen = true;
                 printThen(description);

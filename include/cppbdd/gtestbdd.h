@@ -34,7 +34,7 @@ namespace gtestbdd
 
         virtual ~Scenario()
         {
-            if (!mGiven && !mWhen && !mThen)
+            if(!mGiven && !mWhen && !mThen)
             {
                 return;
             }
@@ -60,13 +60,23 @@ namespace gtestbdd
 
         void given(const std::string &description)
         {
+            if (mGiven)
+            {
+                printError("GIVEN clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
             mGiven = true;
             printGiven(description);
         }
 
         void then(ExpectString description)
         {
-            if(mGiven)
+            if(!mThenExpects.empty())
+            {
+                printError("THEN(EXPECT()) clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
+            else if(mGiven)
             {
                 mThenExpects.push_back(std::move(description).GetString());
             }
@@ -79,7 +89,12 @@ namespace gtestbdd
 
         void when(const std::string &description)
         {
-            if(mGiven)
+            if(mWhen)
+            {
+                printError("WHEN clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
+            else if(mGiven)
             {
                 mWhen = true;
                 printWhen(description);
@@ -93,7 +108,12 @@ namespace gtestbdd
 
         void then(const std::string &description)
         {
-            if(mWhen)
+            if(mThen)
+            {
+                printError("THEN clause is duplicated. AND should be used for additional statements.");
+                assert(false);
+            }
+            else if(mWhen)
             {
                 mThen = true;
 
